@@ -115,19 +115,21 @@ uint16_t Adafruit_ADS1X15::getDataRate() { return m_dataRate; }
     @return the ADC reading
 */
 /**************************************************************************/
-int16_t Adafruit_ADS1X15::readADC_SingleEnded(uint8_t channel) {
-  if (channel > 3) {
-    return 0;
+bool Adafruit_ADS1X15::readADC_SingleEnded(uint8_t channel, int16_t *value)
+{
+  if(channel > 3) return 0;
+  if(!startADCReading(MUX_BY_CHANNEL[channel], /*continuous=*/false)) return 0;
+
+  //- Wait for the conversion to complete.
+  uint32_t start = millis();
+  while(!conversionComplete())
+  {
+    if(millis() - start > ADS1X15_TIMEOUT_MS) return 0;
   }
 
-  startADCReading(MUX_BY_CHANNEL[channel], /*continuous=*/false);
-
-  // Wait for the conversion to complete
-  while (!conversionComplete())
-    ;
-
-  // Read the conversion results
-  return getLastConversionResults();
+  //- Read the conversion results.
+  *value = getLastConversionResults();
+  return 1;
 }
 
 /**************************************************************************/
@@ -261,8 +263,9 @@ void Adafruit_ADS1X15::startComparator_SingleEnded(uint8_t channel,
     @return the last ADC reading
 */
 /**************************************************************************/
-int16_t Adafruit_ADS1X15::getLastConversionResults() {
-  // Read the conversion results
+int16_t Adafruit_ADS1X15::getLastConversionResults()
+{
+  //- Read the conversion results
   uint16_t res = readRegister(ADS1X15_REG_POINTER_CONVERT) >> m_bitShift;
   if (m_bitShift == 0) {
     return (int16_t)res;
@@ -338,7 +341,7 @@ float Adafruit_ADS1X15::computeVolts(int16_t counts) {
     @param continuous continuous if set, otherwise single shot
 */
 /**************************************************************************/
-void Adafruit_ADS1X15::startADCReading(uint16_t mux, bool continuous) {
+bool Adafruit_ADS1X15::startADCReading(uint16_t mux, bool continuous) {
   // Start with default values
   uint16_t config =
       ADS1X15_REG_CONFIG_CQUE_1CONV |   // Set CQUE to any value other than
@@ -365,12 +368,14 @@ void Adafruit_ADS1X15::startADCReading(uint16_t mux, bool continuous) {
   // Set 'start single-conversion' bit
   config |= ADS1X15_REG_CONFIG_OS_SINGLE;
 
+  bool success = true;
   // Write config register to the ADC
-  writeRegister(ADS1X15_REG_POINTER_CONFIG, config);
+  success &= writeRegister(ADS1X15_REG_POINTER_CONFIG, config);
 
   // Set ALERT/RDY to RDY mode.
-  writeRegister(ADS1X15_REG_POINTER_HITHRESH, 0x8000);
-  writeRegister(ADS1X15_REG_POINTER_LOWTHRESH, 0x0000);
+  success &= writeRegister(ADS1X15_REG_POINTER_HITHRESH, 0x8000);
+  success &= writeRegister(ADS1X15_REG_POINTER_LOWTHRESH, 0x0000);
+  return success;
 }
 
 /**************************************************************************/
@@ -392,11 +397,12 @@ bool Adafruit_ADS1X15::conversionComplete() {
     @param value value to write to register
 */
 /**************************************************************************/
-void Adafruit_ADS1X15::writeRegister(uint8_t reg, uint16_t value) {
+bool Adafruit_ADS1X15::writeRegister(uint8_t reg, uint16_t value)
+{
   buffer[0] = reg;
   buffer[1] = value >> 8;
   buffer[2] = value & 0xFF;
-  m_i2c_dev->write(buffer, 3);
+  return m_i2c_dev->write(buffer, 3);
 }
 
 /**************************************************************************/
@@ -408,7 +414,7 @@ void Adafruit_ADS1X15::writeRegister(uint8_t reg, uint16_t value) {
     @return 16 bit register value read
 */
 /**************************************************************************/
-uint16_t Adafruit_ADS1X15::readRegister(uint8_t reg) {
+uint16_t Adafruit_ADS1X15::readRegister(uint8_t reg) { //- ToDo: Modify the library to return bool and register value in pointer. 
   buffer[0] = reg;
   m_i2c_dev->write(buffer, 1);
   m_i2c_dev->read(buffer, 2);

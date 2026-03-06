@@ -140,6 +140,9 @@ typedef enum {
 #define RATE_ADS1115_475SPS (0x00C0) ///< 475 samples per second
 #define RATE_ADS1115_860SPS (0x00E0) ///< 860 samples per second
 
+/** General values  */
+#define ADS1X15_TIMEOUT_MS		20
+
 /**************************************************************************/
 /*!
     @brief  Sensor driver for the Adafruit ADS1X15 ADC breakouts.
@@ -155,7 +158,7 @@ protected:
 
 public:
   bool begin(uint8_t i2c_addr = ADS1X15_ADDRESS, TwoWire *wire = &Wire);
-  int16_t readADC_SingleEnded(uint8_t channel);
+  bool readADC_SingleEnded(uint8_t channel, int16_t *value);
   int16_t readADC_Differential_0_1();
   int16_t readADC_Differential_0_3();
   int16_t readADC_Differential_1_3();
@@ -169,12 +172,12 @@ public:
   void setDataRate(uint16_t rate);
   uint16_t getDataRate();
 
-  void startADCReading(uint16_t mux, bool continuous);
+  bool startADCReading(uint16_t mux, bool continuous);
 
   bool conversionComplete();
 
 private:
-  void writeRegister(uint8_t reg, uint16_t value);
+  bool writeRegister(uint8_t reg, uint16_t value);
   uint16_t readRegister(uint8_t reg);
   uint8_t buffer[3];
 };
