@@ -158,13 +158,15 @@ protected:
 
 public:
   bool begin(uint8_t i2c_addr = ADS1X15_ADDRESS, TwoWire *wire = &Wire);
-  bool readADC_SingleEnded(uint8_t channel, int16_t *value);
+  int16_t readADC_SingleEnded(uint8_t channel);
+  bool readADC_SingleEndedEx(uint8_t channel, int16_t *value);
   int16_t readADC_Differential_0_1();
   int16_t readADC_Differential_0_3();
   int16_t readADC_Differential_1_3();
   int16_t readADC_Differential_2_3();
   void startComparator_SingleEnded(uint8_t channel, int16_t threshold);
   int16_t getLastConversionResults();
+  bool getLastConversionResultsEx(int16_t *result);
   float getFsRange();
   float computeVolts(int16_t counts);
   void setGain(adsGain_t gain);
@@ -179,6 +181,7 @@ public:
 private:
   bool writeRegister(uint8_t reg, uint16_t value);
   uint16_t readRegister(uint8_t reg);
+  bool readRegisterEx(uint8_t reg, uint16_t *data);
   uint8_t buffer[3];
 };
 
