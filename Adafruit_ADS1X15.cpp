@@ -133,7 +133,7 @@ int16_t Adafruit_ADS1X15::readADC_SingleEnded(uint8_t channel) {
 /**************************************************************************/
 /*!
     @brief  Performs a single-ended ADC reading from the specified channel with a timeout. 
-            Returns immediately if the operation succeeds or fails due to timeout.
+    Returns immediately if the operation succeeds or fails due to timeout.
 
     @param channel ADC channel to read (0-3).
     @param value Pointer to an int16_t where the ADC result will be stored.
@@ -141,20 +141,24 @@ int16_t Adafruit_ADS1X15::readADC_SingleEnded(uint8_t channel) {
     @return true if the reading was successful, false otherwise.
 */
 /**************************************************************************/
-bool Adafruit_ADS1X15::readADC_SingleEndedEx(uint8_t channel, int16_t *value)
-{
-  if(channel > 3) return 0;
-  if(!startADCReading(MUX_BY_CHANNEL[channel], /*continuous=*/false)) return 0;
+bool Adafruit_ADS1X15::readADC_SingleEndedEx(uint8_t channel, int16_t *value) {
+  
+  if(channel > 3)
+	  return 0;
+  
+  if(!startADCReading(MUX_BY_CHANNEL[channel], /*continuous=*/false))
+	  return 0;
 
   //- Wait for the conversion to complete.
   uint32_t start = millis();
-  while(!conversionComplete()) 
-  {
-    if(millis() - start > ADS1X15_TIMEOUT_MS) return 0;
+  while(!conversionComplete()) {
+    if(millis() - start > ADS1X15_TIMEOUT_MS)
+		return 0;
   }
 
   //- Read the conversion results.
-  if(!getLastConversionResultsEx(value)) return 0;
+  if(!getLastConversionResultsEx(value))
+	  return 0;
   return 1;
 }
 
@@ -290,8 +294,7 @@ void Adafruit_ADS1X15::startComparator_SingleEnded(uint8_t channel,
     @return the last ADC reading
 */
 /**************************************************************************/
-int16_t Adafruit_ADS1X15::getLastConversionResults()
-{
+int16_t Adafruit_ADS1X15::getLastConversionResults() {
   //- Read the conversion results
   uint16_t res = readRegister(ADS1X15_REG_POINTER_CONVERT) >> m_bitShift;
   if (m_bitShift == 0) {
@@ -311,34 +314,31 @@ int16_t Adafruit_ADS1X15::getLastConversionResults()
 /**************************************************************************/
 /*!
     @brief  This extended function reads the last conversion results without 
-			changing the config value. Returns immediately if the operation fails.
+	changing the config value. Returns immediately if the operation fails.
 
     @param result Pointer to an int16_t where the result will be stored.
 
     @return true if the reading was successful, false otherwise.
 */
 /**************************************************************************/
-bool Adafruit_ADS1X15::getLastConversionResultsEx(int16_t *result)
-{
+bool Adafruit_ADS1X15::getLastConversionResultsEx(int16_t *result) {
   //- Read the conversion results
   uint16_t res;
   readRegisterEx(ADS1X15_REG_POINTER_CONVERT, &res);
   res = res >> m_bitShift;
   
-  if(m_bitShift == 0)
-  {
+  if(m_bitShift == 0) {
     return (int16_t)res;
-  }
-  else
-  {
+  } else {
     //- Shift 12-bit results right 4 bits for the ADS1015,
     //- making sure we keep the sign bit intact.
-    if(res > 0x07FF)
-	{
+    if(res > 0x07FF) {
       //- negative number - extend the sign to 16th bit.
       res |= 0xF000;
     }
-    return (int16_t)res;
+	
+	*result = (int16_t)res;
+    return 1;
   }
 }
 
@@ -432,11 +432,16 @@ bool Adafruit_ADS1X15::startADCReading(uint16_t mux, bool continuous) {
   config |= ADS1X15_REG_CONFIG_OS_SINGLE;
 
   // Write config register to the ADC
-  if(!writeRegister(ADS1X15_REG_POINTER_CONFIG, config)) return 0;
+  if(!writeRegister(ADS1X15_REG_POINTER_CONFIG, config))
+	  return 0;
 
   // Set ALERT/RDY to RDY mode.
-  if(!writeRegister(ADS1X15_REG_POINTER_HITHRESH, 0x8000)) return 0;
-  if(!writeRegister(ADS1X15_REG_POINTER_LOWTHRESH, 0x0000)) return 0;
+  if(!writeRegister(ADS1X15_REG_POINTER_HITHRESH, 0x8000))
+	  return 0;
+  
+  if(!writeRegister(ADS1X15_REG_POINTER_LOWTHRESH, 0x0000))
+	  return 0;
+  
   return 1;
 }
 
@@ -488,7 +493,7 @@ uint16_t Adafruit_ADS1X15::readRegister(uint8_t reg) {
 /**************************************************************************/
 /*!
     @brief  Extended function to read 16-bits from the specified destination register.
-			Returns immediately if the operation fails.
+	Returns immediately if the operation fails.
 
     @param reg register address to read from
 	@param data Pointer to an uint16_t where the register result will be stored.
@@ -496,11 +501,13 @@ uint16_t Adafruit_ADS1X15::readRegister(uint8_t reg) {
     @return true if the reading was successful, false otherwise.
 */
 /**************************************************************************/
-bool Adafruit_ADS1X15::readRegisterEx(uint8_t reg, uint16_t *data)
-{
+bool Adafruit_ADS1X15::readRegisterEx(uint8_t reg, uint16_t *data) {
   buffer[0] = reg;
-  if(!m_i2c_dev->write(buffer, 1)) return 0; //- Return immidiately if uncessfull. 
-  if(!m_i2c_dev->read(buffer, 2)) return 0; //- Return immidiately if uncessfull. 
+  if(!m_i2c_dev->write(buffer, 1))
+	  return 0; //- Return immidiately if uncessfull.
+  
+  if(!m_i2c_dev->read(buffer, 2))
+	  return 0; //- Return immidiately if uncessfull.
   
   *data = ((buffer[0] << 8) | buffer[1]);
   return 1;

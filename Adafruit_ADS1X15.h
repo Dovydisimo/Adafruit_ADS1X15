@@ -141,7 +141,7 @@ typedef enum {
 #define RATE_ADS1115_860SPS (0x00E0) ///< 860 samples per second
 
 /** General values  */
-#define ADS1X15_TIMEOUT_MS		20
+#define ADS1X15_TIMEOUT_MS 20
 
 /**************************************************************************/
 /*!
